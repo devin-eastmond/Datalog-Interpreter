@@ -1,5 +1,10 @@
 #include "Predicate.h"
 
+Predicate::Predicate(string id)
+{
+    this->id = id;
+}
+
 string Predicate::ToString() const
 {
     string objectString = id + "(" + parameters.at(0)->ToString();
@@ -19,4 +24,9 @@ vector<Parameter*> Predicate::GetParameters() const
 void Predicate::AddParameter(Parameter *parameter)
 {
     parameters.push_back(parameter);
+}
+
+void Predicate::SetParameters(vector<Parameter*> parameters)
+{
+    this->parameters = parameters;
 }

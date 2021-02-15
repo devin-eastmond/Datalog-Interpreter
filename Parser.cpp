@@ -7,200 +7,299 @@ Parser::~Parser()
     }
 }
 
-void Parser::Parse(vector<Token*> tokens)
+DatalogProgram* Parser::Parse(vector<Token*> tokens)
 {
     this->tokens = tokens;
     tokenIndex = 0;
-    ParseDatalogProgram();
+    return ParseDatalogProgram();
 }
 
 // Grammar: datalogProgram -> SCHEMES COLON scheme schemeList FACTS COLON factList RULES COLON ruleList QUERIES COLON query queryList EOF
-void Parser::ParseDatalogProgram()
+DatalogProgram* Parser::ParseDatalogProgram()
 {
+    DatalogProgram* datalogProgram = new DatalogProgram();
+    
     try {
         ParseTerminal(Token::TYPE_SCHEMES);
         ParseTerminal(Token::TYPE_COLON);
-        ParseScheme();
-        ParseSchemeList();
+        datalogProgram->AddScheme(ParseScheme());
+        vector<Predicate*> schemeList = ParseSchemeList();
+        for (int i = 0; i < (int)schemeList.size(); i++) {
+            datalogProgram->AddScheme(schemeList.at(i));
+        }
         
         ParseTerminal(Token::TYPE_FACTS);
         ParseTerminal(Token::TYPE_COLON);
-        ParseFactList();
+        vector<Predicate*> factList = ParseFactList();
+        for (int i = 0; i < (int)factList.size(); i++) {
+            datalogProgram->AddFact(factList.at(i));
+        }
         
         ParseTerminal(Token::TYPE_RULES);
         ParseTerminal(Token::TYPE_COLON);
-        ParseRuleList();
+        vector<Rule*> ruleList = ParseRuleList();
+        for (int i = 0; i < (int)ruleList.size(); i++) {
+            datalogProgram->AddRule(ruleList.at(i));
+        }
         
         ParseTerminal(Token::TYPE_QUERIES);
         ParseTerminal(Token::TYPE_COLON);
-        ParseQuery();
-        ParseQueryList();
+        datalogProgram->AddQuery(ParseQuery());
+        vector<Predicate*> queryList = ParseQueryList();
+        for (int i = 0; i < (int)queryList.size(); i++) {
+            datalogProgram->AddQuery(queryList.at(i));
+        }
         
         ParseTerminal(Token::TYPE_EOF);
         
         cout << "Success!" << endl;
+        cout << datalogProgram->ToString();
     } catch(int e) {
         cout << "Failure!" << endl << "  ";
         tokens.at(tokenIndex)->Print();
     }
+    
+    return datalogProgram;
 }
 
 // Grammar: schemeList -> scheme schemeList | lambda
-void Parser::ParseSchemeList()
+vector<Predicate*> Parser::ParseSchemeList()
 {
+    vector<Predicate*> schemeList;
     if (tokens.at(tokenIndex)->GetType() == Token::TYPE_ID) {
-        ParseScheme();
-        ParseSchemeList();
+        schemeList.push_back(ParseScheme());
+        vector<Predicate*> schemeListToAdd = ParseSchemeList();
+        schemeList.insert(schemeList.end(), schemeListToAdd.begin(), schemeListToAdd.end());
     }
+    
+    return schemeList;
 }
 
 // Grammar: factList -> fact factList | lambda
-void Parser::ParseFactList()
+vector<Predicate*> Parser::ParseFactList()
 {
+    vector<Predicate*> factList;
     if (tokens.at(tokenIndex)->GetType() == Token::TYPE_ID) {
-        ParseFact();
-        ParseFactList();
+        factList.push_back(ParseFact());
+        vector<Predicate*> factListToAdd = ParseFactList();
+        factList.insert(factList.end(), factListToAdd.begin(), factListToAdd.end());
     }
+    
+    return factList;
 }
 
 // Grammar: ruleList -> rule ruleList | lambda
-void Parser::ParseRuleList()
+vector<Rule*> Parser::ParseRuleList()
 {
+    vector<Rule*> ruleList;
     if (tokens.at(tokenIndex)->GetType() == Token::TYPE_ID) {
-        ParseRule();
-        ParseRuleList();
+        ruleList.push_back(ParseRule());
+        vector<Rule*> ruleListToAdd = ParseRuleList();
+        ruleList.insert(ruleList.end(), ruleListToAdd.begin(), ruleListToAdd.end());
     }
+    
+    return ruleList;
 }
 
 // Grammar: queryList -> query queryList | lambda
-void Parser::ParseQueryList()
+vector<Predicate*> Parser::ParseQueryList()
 {
+    vector<Predicate*> queryList;
     if (tokens.at(tokenIndex)->GetType() == Token::TYPE_ID) {
-        ParseQuery();
-        ParseQueryList();
+        queryList.push_back(ParseQuery());
+        vector<Predicate*> queryListToAdd = ParseQueryList();
+        queryList.insert(queryList.end(), queryListToAdd.begin(), queryListToAdd.end());
     }
+    
+    return queryList;
 }
 
 // Grammar: scheme -> ID LEFT_PAREN ID idList RIGHT_PAREN
-void Parser::ParseScheme()
+Predicate* Parser::ParseScheme()
 {
-    ParseTerminal(Token::TYPE_ID);
+    string id = ParseTerminal(Token::TYPE_ID);
     ParseTerminal(Token::TYPE_LEFT_PAREN);
-    ParseTerminal(Token::TYPE_ID);
-    ParseIdList();
+    PlainParameter* parameter = new PlainParameter(ParseTerminal(Token::TYPE_ID));
+    vector<string> idList = ParseIdList();
     ParseTerminal(Token::TYPE_RIGHT_PAREN);
+    
+    Predicate* scheme = new Predicate(id);
+    scheme->AddParameter(parameter);
+    for (int i = 0; i < (int)idList.size(); i++) {
+        parameter = new PlainParameter(idList.at(i));
+        scheme->AddParameter(parameter);
+    }
+    
+    return scheme;
 }
 
 // Grammar: fact -> ID LEFT_PAREN STRING stringList RIGHT_PAREN PERIOD
-void Parser::ParseFact()
+Predicate* Parser::ParseFact()
 {
-    ParseTerminal(Token::TYPE_ID);
+    string id = ParseTerminal(Token::TYPE_ID);
     ParseTerminal(Token::TYPE_LEFT_PAREN);
-    ParseTerminal(Token::TYPE_STRING);
-    ParseStringList();
+    PlainParameter* parameter = new PlainParameter(ParseTerminal(Token::TYPE_STRING));
+    vector<string> stringList = ParseStringList();
     ParseTerminal(Token::TYPE_RIGHT_PAREN);
     ParseTerminal(Token::TYPE_PERIOD);
+    
+    Predicate* fact = new Predicate(id);
+    fact->AddParameter(parameter);
+    for (int i = 0; i < (int)stringList.size(); i++) {
+        parameter = new PlainParameter(stringList.at(i));
+        fact->AddParameter(parameter);
+    }
+    
+    return fact;
 }
 
 // Grammar: rule -> headPredicate COLON_DASH predicate predicateList PERIOD
-void Parser::ParseRule()
+Rule* Parser::ParseRule()
 {
-    ParseHeadPredicate();
+    Predicate* headPredicate = ParseHeadPredicate();
     ParseTerminal(Token::TYPE_COLON_DASH);
-    ParsePredicate();
-    ParsePredicateList();
+    Predicate* predicate = ParsePredicate();
+    vector<Predicate*> predicateList = ParsePredicateList();
     ParseTerminal(Token::TYPE_PERIOD);
+    
+    Rule* rule = new Rule();
+    rule->SetHeadPredicate(headPredicate);
+    rule->AddPredicate(predicate);
+    for (int i = 0; i < (int)predicateList.size(); i++) {
+        rule->AddPredicate(predicateList.at(i));
+    }
+    
+    return rule;
 }
 
 // Grammar: query -> predicate Q_MARK
-void Parser::ParseQuery()
+Predicate* Parser::ParseQuery()
 {
-    ParsePredicate();
+    Predicate* predicate = ParsePredicate();
     ParseTerminal(Token::TYPE_Q_MARK);
+    
+    return predicate;
 }
 
 // Grammar: headPredicate -> ID LEFT_PAREN ID idList RIGHT_PAREN
-void Parser::ParseHeadPredicate()
+Predicate* Parser::ParseHeadPredicate()
 {
-    ParseTerminal(Token::TYPE_ID);
+    string id = ParseTerminal(Token::TYPE_ID);
     ParseTerminal(Token::TYPE_LEFT_PAREN);
-    ParseTerminal(Token::TYPE_ID);
-    ParseIdList();
+    Parameter* parameter = new Parameter(ParseTerminal(Token::TYPE_ID));
+    vector<string> idList = ParseIdList();
     ParseTerminal(Token::TYPE_RIGHT_PAREN);
+    
+    Predicate* headPredicate = new Predicate(id);
+    headPredicate->AddParameter(parameter);
+    for (int i = 0; i < (int)idList.size(); i++) {
+        parameter = new Parameter(idList.at(i));
+        headPredicate->AddParameter(parameter);
+    }
+    
+    return headPredicate;
 }
 
 // Grammar: predicate -> ID LEFT_PAREN parameter parameterList RIGHT_PAREN
-void Parser::ParsePredicate()
+Predicate* Parser::ParsePredicate()
 {
-    ParseTerminal(Token::TYPE_ID);
+    string id = ParseTerminal(Token::TYPE_ID);
     ParseTerminal(Token::TYPE_LEFT_PAREN);
-    ParseParameter();
-    ParseParameterList();
+    Parameter* parameter = ParseParameter();
+    vector<Parameter*> parameterList = ParseParameterList();
     ParseTerminal(Token::TYPE_RIGHT_PAREN);
+    
+    Predicate* predicate = new Predicate(id);
+    predicate->AddParameter(parameter);
+    for (int i = 0; i < (int)parameterList.size(); i++) {
+        predicate->AddParameter(parameterList.at(i));
+    }
+    
+    return predicate;
 }
 
 // Grammar: predicateList -> COMMA predicate predicateList | lambda
-void Parser::ParsePredicateList()
+vector<Predicate*> Parser::ParsePredicateList()
 {
+    vector<Predicate*> predicateList;
     if (tokens.at(tokenIndex)->GetType() == Token::TYPE_COMMA) {
         ParseTerminal(Token::TYPE_COMMA);
-        ParsePredicate();
-        ParsePredicateList();
+        predicateList.push_back(ParsePredicate());
+        vector<Predicate*> predicateListToAdd = ParsePredicateList();
+        predicateList.insert(predicateList.end(), predicateListToAdd.begin(), predicateListToAdd.end());
     }
+    
+    return predicateList;
 }
 
 // Grammar: parameterList -> COMMA parameter parameterList | lambda
-void Parser::ParseParameterList()
+vector<Parameter*> Parser::ParseParameterList()
 {
+    vector<Parameter*> parameterList;
     if (tokens.at(tokenIndex)->GetType() == Token::TYPE_COMMA) {
         ParseTerminal(Token::TYPE_COMMA);
-        ParseParameter();
-        ParseParameterList();
+        parameterList.push_back(ParseParameter());
+        vector<Parameter*> parameterListToAdd = ParseParameterList();
+        parameterList.insert(parameterList.end(), parameterListToAdd.begin(), parameterListToAdd.end());
     }
+    
+    return parameterList;
 }
 
 // Grammar: stringList -> COMMA STRING stringList | lambda
-void Parser::ParseStringList()
+vector<string> Parser::ParseStringList()
 {
+    vector<string> stringList;
     if (tokens.at(tokenIndex)->GetType() == Token::TYPE_COMMA) {
         ParseTerminal(Token::TYPE_COMMA);
-        ParseTerminal(Token::TYPE_STRING);
-        ParseStringList();
+        stringList.push_back(ParseTerminal(Token::TYPE_STRING));
+        vector<string> stringListToAdd = ParseStringList();
+        stringList.insert(stringList.end(), stringListToAdd.begin(), stringListToAdd.end());
     }
+    
+    return stringList;
 }
 
 // Grammar: idList -> COMMA ID idList | lambda
-void Parser::ParseIdList()
+vector<string> Parser::ParseIdList()
 {
+    vector<string> idList;
     if (tokens.at(tokenIndex)->GetType() == Token::TYPE_COMMA) {
         ParseTerminal(Token::TYPE_COMMA);
-        ParseTerminal(Token::TYPE_ID);
-        ParseIdList();
+        idList.push_back(ParseTerminal(Token::TYPE_ID));
+        vector<string> idListToAdd = ParseIdList();
+        idList.insert(idList.end(), idListToAdd.begin(), idListToAdd.end());
     }
+    
+    return idList;
 }
 
 // Grammar: parameter -> STRING | ID | expression
-void Parser::ParseParameter()
+Parameter* Parser::ParseParameter()
 {
     if (tokens.at(tokenIndex)->GetType() == Token::TYPE_STRING) {
-        ParseTerminal(Token::TYPE_STRING);
+        return new PlainParameter(ParseTerminal(Token::TYPE_STRING));
     } else if (tokens.at(tokenIndex)->GetType() == Token::TYPE_ID) {
-        ParseTerminal(Token::TYPE_ID);
+        return new PlainParameter(ParseTerminal(Token::TYPE_ID));
     } else if (tokens.at(tokenIndex)->GetType() == Token::TYPE_LEFT_PAREN) {
-        ParseExpression();
-    } else {
-        throw 1;
+        return ParseExpression();
     }
+    
+    throw 1;
 }
 
 // Grammar: expression -> LEFT_PAREN parameter operator parameter RIGHT_PAREN
-void Parser::ParseExpression()
+Expression* Parser::ParseExpression()
 {
+    // TODO: Expression
+    Expression* expression = new Expression("A");
     ParseTerminal(Token::TYPE_LEFT_PAREN);
     ParseParameter();
     ParseOperator();
     ParseParameter();
     ParseTerminal(Token::TYPE_RIGHT_PAREN);
+    
+    return expression;
 }
 
 // Grammar: operator -> ADD | MULTIPLY
@@ -215,11 +314,14 @@ void Parser::ParseOperator()
     }
 }
 
-void Parser::ParseTerminal(int tokenType)
+string Parser::ParseTerminal(int tokenType)
 {
+    string tokenInput = tokens.at(tokenIndex)->GetInput();
     if (tokens.at(tokenIndex)->GetType() == tokenType) {
         tokenIndex++;
     } else {
         throw 1;
     }
+    
+    return tokenInput;
 }

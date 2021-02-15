@@ -10,7 +10,8 @@ void DatalogProgram::AddFact(Predicate* fact)
     facts.push_back(fact);
     vector<Parameter*> factParameters = fact->GetParameters();
     for (int i = 0; i < (int)factParameters.size(); i++) {
-        domain.insert(factParameters.at(i)->ToString());
+        string parameter = factParameters.at(i)->ToString();
+        domain.insert(parameter.substr(1, parameter.size() - 2));
     }
 }
 

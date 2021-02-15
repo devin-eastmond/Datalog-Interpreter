@@ -4,7 +4,9 @@
 #include <string>
 #include <vector>
 #include "DatalogProgram.h"
+#include "Expression.h"
 #include "Parameter.h"
+#include "PlainParameter.h"
 #include "Predicate.h"
 #include "Rule.h"
 #include "Token.h"
@@ -17,34 +19,34 @@ private:
     vector<Token*> tokens;
     int tokenIndex = 0;
     
-    void ParseDatalogProgram();
+    DatalogProgram* ParseDatalogProgram();
     
-    void ParseSchemeList();
-    void ParseFactList();
-    void ParseRuleList();
-    void ParseQueryList();
+    vector<Predicate*> ParseSchemeList();
+    vector<Predicate*> ParseFactList();
+    vector<Rule*> ParseRuleList();
+    vector<Predicate*> ParseQueryList();
     
-    void ParseScheme();
-    void ParseFact();
-    void ParseRule();
-    void ParseQuery();
+    Predicate* ParseScheme();
+    Predicate* ParseFact();
+    Rule* ParseRule();
+    Predicate* ParseQuery();
     
-    void ParseHeadPredicate();
-    void ParsePredicate();
+    Predicate* ParseHeadPredicate();
+    Predicate* ParsePredicate();
     
-    void ParsePredicateList();
-    void ParseParameterList();
-    void ParseStringList();
-    void ParseIdList();
+    vector<Predicate*> ParsePredicateList();
+    vector<Parameter*> ParseParameterList();
+    vector<string> ParseStringList();
+    vector<string> ParseIdList();
     
-    void ParseParameter();
-    void ParseExpression();
+    Parameter* ParseParameter();
+    Expression* ParseExpression();
     void ParseOperator();
     
-    void ParseTerminal(int token);
+    string ParseTerminal(int token);
     
 public:
     ~Parser();
     
-    void Parse(vector<Token*> tokens);
+    DatalogProgram* Parse(vector<Token*> tokens);
 };
