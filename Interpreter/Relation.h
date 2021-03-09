@@ -16,8 +16,10 @@ private:
     
 public:
     Relation(string name, Header* header, set<Tuple*> tuples);
+    ~Relation();
     
-    void Select();
+    Relation* Select(int index, string value);
+    Relation* Select(int index1, int index2);
     Relation* Project(vector<string> columnsToKeep);
     Relation* Rename(vector<string> columnNames);
 };

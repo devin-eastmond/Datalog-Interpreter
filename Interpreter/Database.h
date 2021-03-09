@@ -9,4 +9,7 @@ class Database
 {
 private:
     vector<Relation*> relations;
+    
+public:
+    ~Database();
 };
