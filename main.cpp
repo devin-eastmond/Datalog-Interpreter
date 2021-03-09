@@ -3,13 +3,10 @@
 #include <sstream>
 #include <string>
 #include <vector>
-#include "CommentAutomaton.h"
-#include "IdentifierAutomaton.h"
-#include "Lexer.h"
-#include "Parser.h"
-#include "StringAutomaton.h"
-#include "Token.h"
-#include "UndefinedAutomaton.h"
+#include "Parser/DatalogProgram.h"
+#include "Lexer/Lexer.h"
+#include "Parser/Parser.h"
+#include "Lexer/Token.h"
 
 using namespace std;
 
@@ -38,8 +35,10 @@ int main(int argc, const char* argv[]) {
     delete lexer;
     
     Parser* parser = new Parser();
-    parser->Parse(tokens);
+    DatalogProgram* datalogProgram = parser->Parse(tokens);
     delete parser;
+    
+    delete datalogProgram;
     
     return 0;
 }
