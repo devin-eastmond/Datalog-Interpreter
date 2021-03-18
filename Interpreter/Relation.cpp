@@ -7,6 +7,12 @@ Relation::Relation(string name, Header* header, set<Tuple*> tuples)
     this->tuples = tuples;
 }
 
+Relation::Relation(string name, Header* header)
+{
+    this->name = name;
+    this->header = header;
+}
+
 Relation::~Relation()
 {
     delete header;
@@ -14,6 +20,38 @@ Relation::~Relation()
     for (it = tuples.begin(); it != tuples.end(); it++) {
         delete *it;
     }
+}
+
+string Relation::GetName() const
+{
+    return name;
+}
+
+Header* Relation::GetHeader() const
+{
+    return header;
+}
+
+vector<string> Relation::GetHeaderAttributes() const
+{
+    return header->GetAttributes();
+}
+
+set<Tuple*> Relation::GetTuples() const
+{
+    return tuples;
+}
+
+void Relation::AddTuple(Tuple* tuple)
+{
+    set<Tuple*>::iterator it;
+    for (it = tuples.begin(); it != tuples.end(); it++) {
+        Tuple* currentTuple = *it;
+        if (currentTuple->GetAttributeNames() == tuple->GetAttributeNames()) {
+            return;
+        }
+    }
+    tuples.insert(tuple);
 }
 
 Relation* Relation::Select(int index, string value)
@@ -55,7 +93,7 @@ Relation* Relation::Project(vector<string> columnsToKeep)
     
     vector<string> headerAttributes = header->GetAttributes();
     for (int i = 0; i < (int)columnsToKeep.size(); i++) {
-        for (int j = 0; j < (int)headerAttributes.size(); i++) {
+        for (int j = 0; j < (int)headerAttributes.size(); j++) {
             if (columnsToKeep.at(i) == headerAttributes.at(j)) {
                 set<Tuple*>::iterator it;
                 int index = 0;
@@ -82,4 +120,17 @@ Relation* Relation::Project(vector<string> columnsToKeep)
 Relation* Relation::Rename(vector<string> columnNames)
 {
     return new Relation(name, new Header(columnNames), tuples);
+}
+
+string Relation::ToString() const
+{
+    string relationString = "Relation " + name + ":\n";
+    relationString += header->ToString() + "\n";
+    set<Tuple*>::iterator it;
+    for (it = tuples.begin(); it != tuples.end(); it++) {
+        Tuple* tuple = *it;
+        relationString += tuple->ToString() + "\n";
+    }
+    
+    return relationString;
 }

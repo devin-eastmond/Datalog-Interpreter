@@ -51,11 +51,11 @@ DatalogProgram* Parser::ParseDatalogProgram()
         
         ParseTerminal(Token::TYPE_EOF);
         
-        cout << "Success!" << endl;
-        cout << datalogProgram->ToString();
+        //cout << "Success!" << endl;
+        //cout << datalogProgram->ToString();
     } catch(int e) {
-        cout << "Failure!" << endl << "  ";
-        tokens.at(tokenIndex)->Print();
+        //cout << "Failure!" << endl << "  ";
+        //tokens.at(tokenIndex)->Print();
     }
     
     return datalogProgram;

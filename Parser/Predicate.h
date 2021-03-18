@@ -22,4 +22,6 @@ public:
     void AddParameter(Parameter* parameter);
     void SetParameters(vector<Parameter*> parameters);
     
+    string GetId() const;
+    
 };

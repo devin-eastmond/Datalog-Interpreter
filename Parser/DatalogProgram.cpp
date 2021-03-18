@@ -70,3 +70,23 @@ void DatalogProgram::AddQuery(Predicate* query)
 {
     queries.push_back(query);
 }
+
+vector<Predicate*> DatalogProgram::GetSchemes() const
+{
+    return schemes;
+}
+
+vector<Predicate*> DatalogProgram::GetFacts() const
+{
+    return facts;
+}
+
+vector<Rule*> DatalogProgram::GetRules() const
+{
+    return rules;
+}
+
+vector<Predicate*> DatalogProgram::GetQueries() const
+{
+    return queries;
+}

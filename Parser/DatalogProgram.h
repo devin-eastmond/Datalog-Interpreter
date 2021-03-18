@@ -25,4 +25,9 @@ public:
     void AddFact(Predicate* fact);
     void AddRule(Rule* rule);
     void AddQuery(Predicate* query);
+    
+    vector<Predicate*> GetSchemes() const;
+    vector<Predicate*> GetFacts() const;
+    vector<Rule*> GetRules() const;
+    vector<Predicate*> GetQueries() const;
 };

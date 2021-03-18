@@ -15,4 +15,6 @@ public:
     
     void AddAttribute(string attribute);
     vector<string> GetAttributes() const;
+    
+    string ToString() const;
 };

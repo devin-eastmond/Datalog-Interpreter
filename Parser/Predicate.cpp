@@ -37,3 +37,8 @@ void Predicate::SetParameters(vector<Parameter*> parameters)
 {
     this->parameters = parameters;
 }
+
+string Predicate::GetId() const
+{
+    return id;
+}

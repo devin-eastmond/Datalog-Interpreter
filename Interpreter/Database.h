@@ -12,4 +12,12 @@ private:
     
 public:
     ~Database();
+    
+    void AddRelation(Relation* relation);
+    vector<Relation*> GetRelations() const;
+    Relation* GetRelation(string name) const;
+    
+    void AddTupleToRelation(string name, vector<string> attributeNames);
+    
+    string ToString() const;
 };
