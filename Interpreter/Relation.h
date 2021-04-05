@@ -15,6 +15,8 @@ private:
     Header* header;
     set<Tuple*> tuples;
     
+    bool TuplesCanJoin(Tuple* t1, Tuple* t2, Header* h1, Header* h2) const;
+    
 public:
     Relation(string name, Header* header, set<Tuple*> tuples);
     Relation(string name, Header* header);
@@ -30,6 +32,8 @@ public:
     Relation* Select(int index1, int index2);
     Relation* Project(vector<string> columnsToKeep);
     Relation* Rename(vector<string> columnNames);
+    Relation* Join(Relation* relation2);
+    Relation* Union(Relation* relation2);
     
     string ToString() const;
 };

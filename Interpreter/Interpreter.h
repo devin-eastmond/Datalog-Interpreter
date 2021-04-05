@@ -1,5 +1,6 @@
 #pragma once
 
+#include <algorithm>
 #include "Database.h"
 #include "../Parser/DatalogProgram.h"
 
@@ -10,6 +11,7 @@ private:
     
     void EvaluateSchemes(vector<Predicate*> schemes);
     void EvaluateFacts(vector<Predicate*> facts);
+    void EvaluateRules(vector<Rule*> rules);
     void EvaluateQueries(vector<Predicate*> queries);
     
     vector<string> GetAttributeNamesFromParameters(vector<Parameter*> parameters) const;

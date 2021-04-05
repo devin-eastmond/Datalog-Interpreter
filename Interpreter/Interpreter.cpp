@@ -47,6 +47,11 @@ void Interpreter::EvaluateFacts(vector<Predicate*> facts)
     }
 }
 
+void Interpreter::EvaluateRules(vector<Rule *> rules)
+{
+    
+}
+
 void Interpreter::EvaluateQueries(vector<Predicate*> queries)
 {
     // Iterate through queries
