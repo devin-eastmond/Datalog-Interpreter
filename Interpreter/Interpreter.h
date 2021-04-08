@@ -14,6 +14,8 @@ private:
     void EvaluateRules(vector<Rule*> rules);
     void EvaluateQueries(vector<Predicate*> queries);
     
+    Relation* EvaluatePredicate(Predicate* predicate);
+    
     vector<string> GetAttributeNamesFromParameters(vector<Parameter*> parameters) const;
     bool IsVariable(string attribute) const;
     

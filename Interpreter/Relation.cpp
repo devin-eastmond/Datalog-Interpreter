@@ -186,7 +186,8 @@ Relation* Relation::Union(Relation *r2)
         matchingHeaders = false;
     }
     if (matchingHeaders) {
-        Relation* joinedRelation = new Relation(r1->GetName(), r1->GetHeader());
+        //Relation* joinedRelation = new Relation(r1->GetName(), r1->GetHeader());
+        Relation* joinedRelation = r1;
         
         set<Tuple*> tuples1 = r1->GetTuples();
         set<Tuple*> tuples2 = r2->GetTuples();

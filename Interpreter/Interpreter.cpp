@@ -20,6 +20,9 @@ void Interpreter::Run(DatalogProgram* datalogProgram)
     vector<Predicate*> facts = datalogProgram->GetFacts();
     EvaluateFacts(facts);
     
+    vector<Rule*> rules = datalogProgram->GetRules();
+    EvaluateRules(rules);
+    
     vector<Predicate*> queries = datalogProgram->GetQueries();
     EvaluateQueries(queries);
     
@@ -47,45 +50,83 @@ void Interpreter::EvaluateFacts(vector<Predicate*> facts)
     }
 }
 
-void Interpreter::EvaluateRules(vector<Rule *> rules)
+void Interpreter::EvaluateRules(vector<Rule*> rules)
 {
-    
+    for (int i = 0; i < (int)rules.size(); i++) {
+        // 1. Evaluate predicates on right-hand side of rule
+        vector<Relation*> evaluatedPredicates;
+        vector<Predicate*> predicateList = rules.at(i)->GetPredicateList();
+        for (int j = 0; j < (int)predicateList.size(); j++) {
+            evaluatedPredicates.push_back(EvaluatePredicate(predicateList.at(j)));
+        }
+        
+        // 2. Join the relations that result
+        Relation* joinedRelation = evaluatedPredicates.at(0);
+        if (evaluatedPredicates.size() > 1) {
+            for (int j = 1; j < (int)evaluatedPredicates.size(); j++) {
+                joinedRelation = joinedRelation->Join(evaluatedPredicates.at(j));
+            }
+        }
+        
+        // 3. Project columns that appear in head predicate
+        vector<Parameter*> headPredicateParameters = rules.at(i)->GetHeadPredicate()->GetParameters();
+        vector<string> headPredicateColumns;
+        for (int j = 0; j < (int)headPredicateParameters.size(); j++) {
+            headPredicateColumns.push_back(headPredicateParameters.at(j)->ToString());
+        }
+        joinedRelation = joinedRelation->Project(headPredicateColumns);
+        
+        // 4. Rename the relation to make it union-compatible
+        Relation* databaseRelation = database->GetRelation(rules.at(i)->GetHeadPredicate()->GetId());
+        joinedRelation = joinedRelation->Rename(databaseRelation->GetHeader()->GetAttributes());
+        
+        // 5. Union with the relation in the database
+        joinedRelation = joinedRelation->Union(databaseRelation);
+        
+        cout << joinedRelation->ToString() << endl;
+    }
 }
 
 void Interpreter::EvaluateQueries(vector<Predicate*> queries)
 {
     // Iterate through queries
     for (int i = 0; i < (int)queries.size(); i++) {
-        Predicate* query = queries.at(i);
-        string name = query->GetId();
-        Relation* relation = database->GetRelation(name);
-        
-        vector<string> attributes = GetAttributeNamesFromParameters(query->GetParameters());
-        vector<string> variables;
-        vector<string> variableColumns;
-        // Iterate through each attribute of the query
-        for (int j = 0; j < (int)attributes.size(); j++) {
-            string attribute = attributes.at(j);
-            if (IsVariable(attribute)) {
-                if (find(variables.begin(), variables.end(), attribute) == variables.end()) {
-                    variables.push_back(attribute);
-                    variableColumns.push_back(relation->GetHeaderAttributes().at(j));
-                }
-                // Check the rest of the attributes to find matching variables
-                for (int k = j+1; k < (int)attributes.size(); k++) {
-                    if (attributes.at(k) == attribute) {
-                        relation = relation->Select(j, k);
-                    }
-                }
-            } else {
-                relation = relation->Select(j, attribute);
-            }
-        }
-        
-        relation = relation->Project(variableColumns);
-        relation = relation->Rename(variables);
-        QueryEvaluationOutput(query, relation);
+        Relation* relation = EvaluatePredicate(queries.at(i));
+        QueryEvaluationOutput(queries.at(i), relation);
     }
+}
+
+Relation* Interpreter::EvaluatePredicate(Predicate* predicate)
+{
+    string name = predicate->GetId();
+    Relation* relation = database->GetRelation(name);
+    
+    vector<string> attributes = GetAttributeNamesFromParameters(predicate->GetParameters());
+    vector<string> variables;
+    vector<string> variableColumns;
+    // Iterate through each attribute of the query
+    for (int j = 0; j < (int)attributes.size(); j++) {
+        string attribute = attributes.at(j);
+        if (IsVariable(attribute)) {
+            if (find(variables.begin(), variables.end(), attribute) == variables.end()) {
+                variables.push_back(attribute);
+                variableColumns.push_back(relation->GetHeaderAttributes().at(j));
+            }
+            // Check the rest of the attributes to find matching variables
+            for (int k = j+1; k < (int)attributes.size(); k++) {
+                if (attributes.at(k) == attribute) {
+                    relation = relation->Select(j, k);
+                }
+            }
+        } else {
+            relation = relation->Select(j, attribute);
+        }
+    }
+    
+    relation = relation->Project(variableColumns);
+    relation = relation->Rename(variables);
+    
+    return relation;
 }
 
 vector<string> Interpreter::GetAttributeNamesFromParameters(vector<Parameter*> parameters) const
