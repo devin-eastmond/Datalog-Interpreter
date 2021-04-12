@@ -52,39 +52,46 @@ void Interpreter::EvaluateFacts(vector<Predicate*> facts)
 
 void Interpreter::EvaluateRules(vector<Rule*> rules)
 {
-    for (int i = 0; i < (int)rules.size(); i++) {
-        // 1. Evaluate predicates on right-hand side of rule
-        vector<Relation*> evaluatedPredicates;
-        vector<Predicate*> predicateList = rules.at(i)->GetPredicateList();
-        for (int j = 0; j < (int)predicateList.size(); j++) {
-            evaluatedPredicates.push_back(EvaluatePredicate(predicateList.at(j)));
-        }
-        
-        // 2. Join the relations that result
-        Relation* joinedRelation = evaluatedPredicates.at(0);
-        if (evaluatedPredicates.size() > 1) {
-            for (int j = 1; j < (int)evaluatedPredicates.size(); j++) {
-                joinedRelation = joinedRelation->Join(evaluatedPredicates.at(j));
+    int numTuples = 0;
+    do {
+        numTuples = database->GetNumTuples();
+        for (int i = 0; i < (int)rules.size(); i++) {
+            cout << rules.at(i)->ToString() << "." << endl;
+            
+            // 1. Evaluate predicates on right-hand side of rule
+            vector<Relation*> evaluatedPredicates;
+            vector<Predicate*> predicateList = rules.at(i)->GetPredicateList();
+            for (int j = 0; j < (int)predicateList.size(); j++) {
+                evaluatedPredicates.push_back(EvaluatePredicate(predicateList.at(j)));
             }
+            
+            // 2. Join the relations that result
+            Relation* joinedRelation = evaluatedPredicates.at(0);
+            if (evaluatedPredicates.size() > 1) {
+                for (int j = 1; j < (int)evaluatedPredicates.size(); j++) {
+                    joinedRelation = joinedRelation->Join(evaluatedPredicates.at(j));
+                }
+            }
+            
+            // 3. Project columns that appear in head predicate
+            vector<Parameter*> headPredicateParameters = rules.at(i)->GetHeadPredicate()->GetParameters();
+            vector<string> headPredicateColumns;
+            for (int j = 0; j < (int)headPredicateParameters.size(); j++) {
+                headPredicateColumns.push_back(headPredicateParameters.at(j)->ToString());
+            }
+            joinedRelation = joinedRelation->Project(headPredicateColumns);
+            
+            // 4. Rename the relation to make it union-compatible
+            Relation* databaseRelation = database->GetRelation(rules.at(i)->GetHeadPredicate()->GetId());
+            joinedRelation = joinedRelation->Rename(databaseRelation->GetHeader()->GetAttributes());
+            
+            // 5. Union with the relation in the database
+            //joinedRelation = joinedRelation->Union(databaseRelation);
+            databaseRelation->Join(joinedRelation);
+            
+            cout << joinedRelation->ToString() << endl;
         }
-        
-        // 3. Project columns that appear in head predicate
-        vector<Parameter*> headPredicateParameters = rules.at(i)->GetHeadPredicate()->GetParameters();
-        vector<string> headPredicateColumns;
-        for (int j = 0; j < (int)headPredicateParameters.size(); j++) {
-            headPredicateColumns.push_back(headPredicateParameters.at(j)->ToString());
-        }
-        joinedRelation = joinedRelation->Project(headPredicateColumns);
-        
-        // 4. Rename the relation to make it union-compatible
-        Relation* databaseRelation = database->GetRelation(rules.at(i)->GetHeadPredicate()->GetId());
-        joinedRelation = joinedRelation->Rename(databaseRelation->GetHeader()->GetAttributes());
-        
-        // 5. Union with the relation in the database
-        joinedRelation = joinedRelation->Union(databaseRelation);
-        
-        cout << joinedRelation->ToString() << endl;
-    }
+    } while(numTuples != database->GetNumTuples());
 }
 
 void Interpreter::EvaluateQueries(vector<Predicate*> queries)

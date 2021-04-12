@@ -16,6 +16,7 @@ public:
     void AddRelation(Relation* relation);
     vector<Relation*> GetRelations() const;
     Relation* GetRelation(string name) const;
+    int GetNumTuples() const;
     
     void AddTupleToRelation(string name, vector<string> attributeNames);
     

@@ -27,6 +27,16 @@ Relation* Database::GetRelation(string name) const
     throw 1;
 }
 
+int Database::GetNumTuples() const
+{
+    int numTuples = 0;
+    for (int i = 0; i < (int)relations.size(); i++) {
+        numTuples += (int)relations.at(i)->GetTuples().size();
+    }
+    
+    return numTuples;
+}
+
 void Database::AddTupleToRelation(string name, vector<string> attributeNames)
 {
     for (int i = 0; i < (int)relations.size(); i++) {

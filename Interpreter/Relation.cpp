@@ -186,8 +186,8 @@ Relation* Relation::Union(Relation *r2)
         matchingHeaders = false;
     }
     if (matchingHeaders) {
-        //Relation* joinedRelation = new Relation(r1->GetName(), r1->GetHeader());
-        Relation* joinedRelation = r1;
+        Relation* joinedRelation = new Relation(r1->GetName(), r1->GetHeader());
+        //Relation* joinedRelation = r1;
         
         set<Tuple*> tuples1 = r1->GetTuples();
         set<Tuple*> tuples2 = r2->GetTuples();
@@ -195,11 +195,13 @@ Relation* Relation::Union(Relation *r2)
         for (it1 = tuples1.begin(); it1 != tuples1.end(); it1++) {
             Tuple* tuple = *it1;
             joinedRelation->AddTuple(tuple);
+            r1->AddTuple(tuple);
         }
         set<Tuple*>::iterator it2;
         for (it2 = tuples2.begin(); it2 != tuples2.end(); it2++) {
             Tuple* tuple = *it2;
             joinedRelation->AddTuple(tuple);
+            r1->AddTuple(tuple);
         }
         
         return joinedRelation;
