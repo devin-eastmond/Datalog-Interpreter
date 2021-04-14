@@ -1,8 +1,8 @@
-#makefile for lab 2 pass off cases
-NUM:=2
+#makefile for lab 4 pass off cases
+NUM:=4
 buckets:=80 100
-numbers_80:=0 1 2 3 4 5 6 7 8
-numbers_100:=0 1 2
+numbers_80:=0 1 2 3 4 5 6 7
+numbers_100:=1 2 3 5 6 7 8
 tests:=Lab$(NUM)PassOffCases
 
 .SILENT: all $(buckets)
@@ -20,4 +20,4 @@ $(buckets):
 	done \
 
 compile:
-	g++ -Wall -Werror -std=c++17 -g *.cpp ./Interpreter/*.cpp ./Parser/*.cpp ./Lexer/*.cpp -o lab$(NUM)
+	g++ -Wall -Werror -std=c++17 -g *.cpp -o lab$(NUM)

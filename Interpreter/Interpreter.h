@@ -21,6 +21,8 @@ private:
     
     void QueryEvaluationOutput(Predicate* query, Relation* relation);
     
+    void print(Relation* r1, Relation* r2);
+    
 public:
     Interpreter();
     ~Interpreter();

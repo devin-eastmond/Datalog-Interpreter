@@ -42,16 +42,18 @@ set<Tuple*> Relation::GetTuples() const
     return tuples;
 }
 
-void Relation::AddTuple(Tuple* tuple)
+bool Relation::AddTuple(Tuple* tuple)
 {
     set<Tuple*>::iterator it;
     for (it = tuples.begin(); it != tuples.end(); it++) {
         Tuple* currentTuple = *it;
         if (currentTuple->GetAttributeNames() == tuple->GetAttributeNames()) {
-            return;
+            return false;
         }
     }
     tuples.insert(tuple);
+    
+    return true;
 }
 
 Relation* Relation::Select(int index, string value)
@@ -124,10 +126,10 @@ Relation* Relation::Rename(vector<string> columnNames)
 
 Relation* Relation::Join(Relation *r2)
 {
-    Relation* joinedRelation = Union(r2);
-    if (joinedRelation != NULL) {
-        return joinedRelation;
-    }
+//    Relation* joinedRelation = Union(r2);
+//    if (joinedRelation != NULL) {
+//        return joinedRelation;
+//    }
     
     Relation* r1 = this;
     
@@ -142,7 +144,7 @@ Relation* Relation::Join(Relation *r2)
     }
     
     Header* h = new Header(attributeNames);
-    joinedRelation = new Relation(r1->GetName(), h);
+    Relation* joinedRelation = new Relation(r1->GetName(), h);
     set<Tuple*> tuples1 = r1->GetTuples();
     set<Tuple*> tuples2 = r2->GetTuples();
     

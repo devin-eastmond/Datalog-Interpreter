@@ -52,7 +52,9 @@ void Interpreter::EvaluateFacts(vector<Predicate*> facts)
 
 void Interpreter::EvaluateRules(vector<Rule*> rules)
 {
+    cout << "Rule Evaluation" << endl;
     int numTuples = 0;
+    int passes = 0;
     do {
         numTuples = database->GetNumTuples();
         for (int i = 0; i < (int)rules.size(); i++) {
@@ -72,6 +74,7 @@ void Interpreter::EvaluateRules(vector<Rule*> rules)
                     joinedRelation = joinedRelation->Join(evaluatedPredicates.at(j));
                 }
             }
+            //cout << "2:" << endl << joinedRelation->ToString() << endl;
             
             // 3. Project columns that appear in head predicate
             vector<Parameter*> headPredicateParameters = rules.at(i)->GetHeadPredicate()->GetParameters();
@@ -80,18 +83,61 @@ void Interpreter::EvaluateRules(vector<Rule*> rules)
                 headPredicateColumns.push_back(headPredicateParameters.at(j)->ToString());
             }
             joinedRelation = joinedRelation->Project(headPredicateColumns);
+            //cout << "3:" << endl << joinedRelation->ToString() << endl;
             
             // 4. Rename the relation to make it union-compatible
             Relation* databaseRelation = database->GetRelation(rules.at(i)->GetHeadPredicate()->GetId());
             joinedRelation = joinedRelation->Rename(databaseRelation->GetHeader()->GetAttributes());
+            print(joinedRelation, databaseRelation);
+            //cout << "4:" << endl << joinedRelation->ToString() << endl;
             
             // 5. Union with the relation in the database
             //joinedRelation = joinedRelation->Union(databaseRelation);
-            databaseRelation->Join(joinedRelation);
+            databaseRelation->Union(joinedRelation);
             
-            cout << joinedRelation->ToString() << endl;
+            //cout << "5:" << endl << joinedRelation->ToString() << endl;
         }
+        passes++;
     } while(numTuples != database->GetNumTuples());
+    cout << endl;
+    cout << "Schemes populated after " << passes << " passes through the Rules." << endl << endl;
+    cout << "Query Evaluation" << endl;
+}
+
+void Interpreter::print(Relation* r1, Relation* r2)
+{
+    vector<string> r1HeaderAttributes = r1->GetHeader()->GetAttributes();
+    set<Tuple*>::iterator it;
+    set<Tuple*> r1Tuples = r1->GetTuples();
+    set<Tuple*> r2Tuples = r2->GetTuples();
+    set<vector<string>> sortedTuples;
+    set<vector<string>>::iterator it2;
+    for (it = r1Tuples.begin(); it != r1Tuples.end(); it++) {
+        Tuple* tuple = *it;
+        sortedTuples.insert(tuple->GetAttributeNames());
+    }
+    for (it2 = sortedTuples.begin(); it2 != sortedTuples.end(); it2++) {
+        bool found = false;
+        vector<string> t1Attributes = *it2;
+        set<Tuple*>::iterator it2;
+        for (it2 = r2Tuples.begin(); it2 != r2Tuples.end(); it2++) {
+            Tuple* t2 = *it2;
+            vector<string> t2Attributes = t2->GetAttributeNames();
+            if (t1Attributes == t2Attributes) {
+                found = true;
+            }
+        }
+        if (!found) {
+            cout << "  ";
+            for (int i = 0; i < (int)r1HeaderAttributes.size(); i++) {
+                cout << r1HeaderAttributes.at(i) << "=" << t1Attributes.at(i);
+                if (i + 1 < (int)r1HeaderAttributes.size()) {
+                    cout << ", ";
+                }
+            }
+            cout << endl;
+        }
+    }
 }
 
 void Interpreter::EvaluateQueries(vector<Predicate*> queries)
@@ -132,6 +178,8 @@ Relation* Interpreter::EvaluatePredicate(Predicate* predicate)
     
     relation = relation->Project(variableColumns);
     relation = relation->Rename(variables);
+    
+    //cout << "1:" << endl << relation->ToString() << endl;
     
     return relation;
 }

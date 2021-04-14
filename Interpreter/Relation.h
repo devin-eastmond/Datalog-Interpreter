@@ -26,7 +26,7 @@ public:
     Header* GetHeader() const;
     vector<string> GetHeaderAttributes() const;
     set<Tuple*> GetTuples() const;
-    void AddTuple(Tuple* tuple);
+    bool AddTuple(Tuple* tuple);
     
     Relation* Select(int index, string value);
     Relation* Select(int index1, int index2);

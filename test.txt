@@ -21,4 +21,3 @@ Rules:
 Queries:
   cn('CS101',Name)?
   ncg('Snoopy',Course,Grade)?
-  csg(A,'12345','A')?
